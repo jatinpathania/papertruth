@@ -1,0 +1,31 @@
+{
+  "name": "papertruth",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "PaperTruth — a crowd-consensus answer key and dispute resolution system",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "stop": "node scripts/stop.mjs",
+    "dev:api": "node scripts/dev.mjs --api-only",
+    "dev:web": "node scripts/dev.mjs --web-only",
+    "dev:fresh": "node scripts/dev.mjs --seed",
+    "install:all": "npm --prefix server install && npm --prefix client install",
+    "simulate": "npm --prefix server run simulate",
+    "test": "npm --prefix server test",
+    "check:realtime": "node server/tests/realtime.check.mjs",
+    "build": "npm --prefix client run build",
+    "verify": "npm --prefix server test && npm --prefix client run build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.6.0"
+  }
+}

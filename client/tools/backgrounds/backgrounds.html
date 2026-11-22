@@ -1,0 +1,407 @@
+<!doctype html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        background: #000;
+      }
+      canvas {
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="c"></canvas>
+    <script id="frag" type="x-shader/x-fragment">#version 300 es
+precision highp float;
+
+uniform vec2 uRes;
+uniform int uScene;
+uniform float uSeed;
+out vec4 outColor;
+
+const vec3 BG = vec3(0.020, 0.027, 0.047);
+const vec3 CYAN = vec3(0.133, 0.886, 0.961);
+const vec3 VIOLET = vec3(0.753, 0.518, 0.988);
+const vec3 GOLD = vec3(1.000, 0.690, 0.125);
+const vec3 ROSE = vec3(1.000, 0.361, 0.478);
+const vec3 MINT = vec3(0.204, 0.906, 0.659);
+const vec3 INDIGO = vec3(0.235, 0.180, 0.560);
+
+float hash12(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * 0.1031);
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.x + p3.y) * p3.z);
+}
+vec2 hash22(vec2 p) {
+  vec3 p3 = fract(vec3(p.xyx) * vec3(0.1031, 0.1030, 0.0973));
+  p3 += dot(p3, p3.yzx + 33.33);
+  return fract((p3.xx + p3.yz) * p3.zy);
+}
+
+vec2 grad(vec2 i) {
+  float a = hash12(i) * 6.2831853;
+  return vec2(cos(a), sin(a));
+}
+float gnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  float a = dot(grad(i), f);
+  float b = dot(grad(i + vec2(1, 0)), f - vec2(1, 0));
+  float c = dot(grad(i + vec2(0, 1)), f - vec2(0, 1));
+  float d = dot(grad(i + vec2(1, 1)), f - vec2(1, 1));
+  return 0.5 + 0.7071 * mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+const mat2 ROT = mat2(0.8, 0.6, -0.6, 0.8);
+float fbm(vec2 p) {
+  float s = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 7; i++) {
+    s += a * gnoise(p);
+    p = ROT * p * 2.03 + vec2(1.7, 9.2);
+    a *= 0.5;
+  }
+  return s;
+}
+float fbm4(vec2 p) {
+  float s = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 4; i++) {
+    s += a * gnoise(p);
+    p = ROT * p * 2.03 + vec2(4.1, 2.3);
+    a *= 0.5;
+  }
+  return s;
+}
+
+vec3 starfield(vec2 uv, float density) {
+  vec3 col = vec3(0.0);
+  for (int layer = 0; layer < 3; layer++) {
+    float fl = float(layer);
+    float scale = 70.0 + fl * 95.0;
+    vec2 p = uv * scale + vec2(uSeed * 17.3 + fl * 31.7, fl * 11.1);
+    vec2 id = floor(p);
+    vec2 f = fract(p) - 0.5;
+    float h = hash12(id);
+    if (h < density * (0.16 + 0.1 * fl)) {
+      vec2 o = (hash22(id + 3.1) - 0.5) * 0.55;
+      float d = length(f - o);
+      float bright = pow(hash12(id + 9.7), 3.0);
+      float r = mix(0.035, 0.09, bright);
+      float core = exp(-d * d / (r * r));
+      vec3 tint = mix(vec3(1.0), mix(CYAN, VIOLET, hash12(id + 1.3)), 0.35 * hash12(id + 5.5));
+      col += tint * core * mix(0.35, 1.4, bright) / (1.0 + fl * 0.6);
+      if (bright > 0.62 && layer == 0) {
+        vec2 q = f - o;
+        float cross = exp(-abs(q.x) * 60.0) * exp(-q.y * q.y * 18.0) + exp(-abs(q.y) * 60.0) * exp(-q.x * q.x * 18.0);
+        col += tint * cross * 0.45 * bright;
+      }
+    }
+  }
+  return col;
+}
+
+float blob(vec2 uv, vec2 c, float r) {
+  vec2 d = uv - c;
+  return exp(-dot(d, d) / (r * r));
+}
+
+vec3 nebula(vec2 uv, vec3 c1, vec3 c2, vec3 c3, float scale, out float density) {
+  vec2 p = uv * scale + uSeed * 3.7;
+  vec2 q = vec2(fbm4(p), fbm4(p + vec2(5.2, 1.3)));
+  vec2 r = vec2(fbm4(p + 2.2 * q + vec2(1.7, 9.2)), fbm4(p + 2.2 * q + vec2(8.3, 2.8)));
+  float f = fbm(p + 2.0 * r);
+
+  density = smoothstep(0.38, 0.82, f);
+  vec3 col = mix(c1, c2, smoothstep(0.3, 0.8, q.y));
+  col = mix(col, c3, smoothstep(0.4, 0.85, r.x) * 0.9);
+  vec3 neb = col * density * density * 1.3;
+  float haze = smoothstep(0.3, 0.8, fbm4(p * 0.5 + q));
+  neb += mix(c1, c2, 0.5) * haze * 0.16;
+  neb += mix(c2, vec3(1.0), 0.35) * pow(smoothstep(0.6, 0.92, f), 2.5) * 0.65;
+  float dust = smoothstep(0.5, 0.75, fbm(p * 1.8 + r * 1.2 + 11.0));
+  neb *= 1.0 - 0.6 * dust;
+  return neb;
+}
+
+vec3 aurora(vec2 uv, float base, float spread, float bright) {
+  vec3 acc = vec3(0.0);
+  for (int i = 0; i < 4; i++) {
+    float fi = float(i);
+    float x = uv.x;
+    float yc = base + spread * fi + 0.07 * sin(x * 1.5 + fi * 2.3) + 0.035 * sin(x * 3.7 + fi * 1.1) + 0.08 * (fbm4(vec2(x * 1.1 + fi * 3.7, fi * 1.3)) - 0.5);
+    float dy = uv.y - yc;
+    float edge = exp(-dy * dy / 0.00035);
+    float tail = smoothstep(-0.004, 0.004, dy) * exp(-max(dy, 0.0) * (5.0 - 0.7 * fi));
+    float rays = 0.3 + 0.7 * pow(gnoise(vec2(x * 30.0 + fi * 11.0 + yc * 8.0, fi * 2.0)), 1.6);
+    float fade = smoothstep(1.2, 0.2, abs(x - 0.3 + 0.35 * fi));
+    vec3 low = mix(MINT, CYAN, 0.5 + 0.5 * sin(x * 1.2 + fi));
+    vec3 high = mix(VIOLET, ROSE, 0.3);
+    vec3 c = mix(low, high, smoothstep(0.0, 0.25, max(dy, 0.0)));
+    acc += c * (edge * 0.6 + tail * 0.9) * rays * fade * (1.0 - 0.18 * fi);
+  }
+  return acc * bright;
+}
+
+float vignette(vec2 uv) {
+  vec2 v = uv * vec2(0.9, 1.25);
+  return smoothstep(1.25, 0.25, length(v));
+}
+
+vec3 sceneApp(vec2 uv) {
+  vec3 col = BG * mix(1.2, 0.8, uv.y + 0.5);
+  float d;
+  vec3 neb = nebula(uv, INDIGO * 1.2, CYAN, VIOLET, 1.35, d);
+  float mask = 0.18 + 1.25 * blob(uv, vec2(0.72, 0.36), 0.62) + 1.05 * blob(uv, vec2(-0.78, -0.42), 0.58) + 0.35 * blob(uv, vec2(-0.55, 0.45), 0.35);
+  col += neb * mask * 0.9;
+  col += starfield(uv, 1.0) * (1.0 - 0.6 * d);
+  col += CYAN * 0.05 * blob(uv, vec2(0.75, 0.4), 0.55) + VIOLET * 0.05 * blob(uv, vec2(-0.8, -0.45), 0.5);
+  return col * mix(0.55, 1.0, vignette(uv));
+}
+
+vec3 sceneAuth(vec2 uv) {
+  float hz = -0.12;
+  vec2 sun = vec2(0.0, hz + 0.16);
+  float R = 0.2;
+  vec3 col;
+
+  if (uv.y > hz) {
+    float t = uv.y - hz;
+    col = mix(vec3(0.13, 0.045, 0.2), vec3(0.012, 0.016, 0.034), smoothstep(0.0, 0.6, t));
+    col += vec3(0.02, 0.08, 0.1) * exp(-t * 18.0);
+    col += starfield(uv, 1.1) * smoothstep(0.08, 0.4, t);
+
+    col += aurora(uv, hz + 0.33, 0.055, 0.2) * smoothstep(0.1, 0.3, t);
+
+    vec2 dv = uv - sun;
+    float dist = length(dv);
+    float ang = atan(dv.y, dv.x);
+    float streaks = fbm4(vec2(ang * 3.0, dist * 4.0) + 2.0);
+    float corona = exp(-max(dist - R, 0.0) * 7.5) * (0.55 + 0.9 * streaks);
+    col += mix(VIOLET, CYAN, smoothstep(R, R + 0.25, dist) * 0.2 + 0.4 * streaks) * corona * 0.42;
+    col += mix(CYAN, vec3(1.0), 0.45) * exp(-abs(dist - R) * 220.0) * 0.95;
+    col += CYAN * exp(-abs(dist - R) * 45.0) * 0.28;
+    col *= mix(1.0, 0.04, smoothstep(R, R - 0.004, dist));
+
+    float x = uv.x;
+    float side = smoothstep(0.12, 0.75, abs(x));
+    float ridge = hz + side * (0.05 + 0.19 * fbm(vec2(x * 2.6, 3.0))) + 0.012 * gnoise(vec2(x * 30.0, 1.0));
+    float ridge2 = hz + side * (0.02 + 0.11 * fbm(vec2(x * 4.2 + 7.0, 1.0)));
+    if (uv.y < ridge) {
+      col = mix(col, vec3(0.018, 0.02, 0.04), 0.94);
+      col += CYAN * exp(-(ridge - uv.y) * 160.0) * 0.55 * side;
+      col += VIOLET * 0.05 * exp(-(ridge - uv.y) * 12.0) * side;
+    }
+    if (uv.y < ridge2) {
+      col = mix(col, vec3(0.01, 0.012, 0.024), 0.9);
+      col += VIOLET * exp(-(ridge2 - uv.y) * 200.0) * 0.4 * side;
+    }
+  } else {
+    float d = hz - uv.y;
+    float z = 0.32 / d;
+    vec2 g = vec2(uv.x * z * 1.1, z + 0.4);
+    vec2 w = fwidth(g);
+    vec2 cell = abs(fract(g - 0.5) - 0.5) / max(w, 1e-4);
+    float lineDist = min(cell.x, cell.y);
+    float line = 1.0 - clamp(lineDist * 0.8, 0.0, 1.0);
+    float glow = exp(-lineDist * 0.22);
+    float fog = exp(-z * 0.075);
+    vec3 lineCol = mix(VIOLET, CYAN, smoothstep(0.0, 0.25, d));
+    col = vec3(0.012, 0.012, 0.028) + vec3(0.06, 0.02, 0.09) * exp(-d * 9.0);
+    col += lineCol * (line * 0.85 + glow * 0.18) * fog;
+    vec2 rv = (uv - vec2(sun.x, 2.0 * hz - sun.y)) * vec2(1.0, 3.2);
+    col += mix(VIOLET, CYAN, 0.5) * exp(-length(rv) * 3.2) * 0.22;
+  }
+
+  col += mix(CYAN, vec3(1.0), 0.3) * exp(-abs(uv.y - hz) * 140.0) * 0.6;
+  col += VIOLET * exp(-abs(uv.y - hz) * 14.0) * 0.12;
+  return col * mix(0.5, 1.0, vignette(uv));
+}
+
+vec3 sceneResults(vec2 uv) {
+  float hz = -0.3;
+  vec3 col = mix(vec3(0.03, 0.07, 0.085), vec3(0.012, 0.016, 0.03), smoothstep(hz, 0.5, uv.y));
+  col += starfield(uv, 1.0) * smoothstep(hz, hz + 0.3, uv.y);
+  col += aurora(uv, -0.05, 0.075, 0.36);
+
+  float side = 0.35 + 0.65 * smoothstep(0.0, 0.8, abs(uv.x + 0.05));
+  float mh = hz + 0.02 + side * (0.04 + 0.14 * fbm(vec2(uv.x * 2.2, 5.0)));
+  if (uv.y < mh && uv.y > hz) {
+    col = mix(col, vec3(0.01, 0.016, 0.026), 0.95);
+    col += MINT * exp(-(mh - uv.y) * 170.0) * 0.35;
+  }
+  if (uv.y <= hz) {
+    float depth = hz - uv.y;
+    vec2 m = vec2(uv.x + 0.003 * sin(uv.y * 520.0 + uv.x * 40.0), 2.0 * hz - uv.y);
+    float mirrored = 2.0 * hz - (hz + 0.02 + (0.35 + 0.65 * smoothstep(0.0, 0.8, abs(m.x + 0.05))) * (0.04 + 0.14 * fbm(vec2(m.x * 2.2, 5.0))));
+    vec3 refl = aurora(m, -0.05, 0.075, 0.12);
+    refl *= step(uv.y, mirrored);
+    col = vec3(0.008, 0.013, 0.022) + refl * exp(-depth * 4.0);
+  }
+  col += MINT * exp(-abs(uv.y - hz) * 110.0) * 0.18;
+  return col * mix(0.55, 1.0, vignette(uv));
+}
+
+float voronoiEdge(vec2 p) {
+  vec2 n = floor(p);
+  vec2 f = fract(p);
+  vec2 mr = vec2(0.0);
+  vec2 mg = vec2(0.0);
+  float md = 8.0;
+  for (int j = -1; j <= 1; j++)
+    for (int i = -1; i <= 1; i++) {
+      vec2 g = vec2(float(i), float(j));
+      vec2 o = hash22(n + g);
+      vec2 r = g + o - f;
+      float d = dot(r, r);
+      if (d < md) {
+        md = d;
+        mr = r;
+        mg = g;
+      }
+    }
+  md = 8.0;
+  for (int j = -2; j <= 2; j++)
+    for (int i = -2; i <= 2; i++) {
+      vec2 g = mg + vec2(float(i), float(j));
+      vec2 o = hash22(n + g);
+      vec2 r = g + o - f;
+      if (dot(mr - r, mr - r) > 0.00001) md = min(md, dot(0.5 * (mr + r), normalize(r - mr)));
+    }
+  return md;
+}
+
+vec3 sceneDisputes(vec2 uv) {
+  vec3 col = BG * mix(1.25, 0.8, uv.y + 0.5);
+  float d;
+  vec3 neb = nebula(uv + vec2(0.3, -0.1), vec3(0.3, 0.06, 0.34), ROSE, mix(GOLD, ROSE, 0.25), 1.2, d);
+  float mask = 0.16 + 1.2 * blob(uv, vec2(-0.7, 0.34), 0.62) + 1.05 * blob(uv, vec2(0.8, -0.38), 0.6) + 0.3 * blob(uv, vec2(0.5, 0.45), 0.3);
+  col += neb * mask * 1.35;
+  col += mix(GOLD, ROSE, 0.2) * pow(d, 3.0) * mask * 0.45;
+  col += VIOLET * 0.08 * blob(uv, vec2(0.8, -0.4), 0.6) + ROSE * 0.06 * blob(uv, vec2(-0.7, 0.35), 0.5);
+
+  float e = voronoiEdge(uv * 2.6 + 1.3);
+  float crack = exp(-e * 90.0) * 0.6 + exp(-e * 18.0) * 0.08;
+  float crackMask = smoothstep(0.35, 0.75, fbm4(uv * 1.6 + 4.0)) * (0.2 + mask * 0.8);
+  col += mix(GOLD, ROSE, 0.35) * crack * crackMask * 0.5;
+
+  col += starfield(uv, 0.9) * (1.0 - 0.6 * d);
+  return col * mix(0.55, 1.0, vignette(uv));
+}
+
+vec3 sceneAdmin(vec2 uv) {
+  vec3 col = vec3(0.016, 0.026, 0.048) * mix(1.2, 0.8, uv.y + 0.5);
+  float h = fbm(uv * 1.15 + uSeed);
+  float v = h * 26.0;
+  float fw = fwidth(v);
+  float minor = 1.0 - clamp(abs(fract(v - 0.5) - 0.5) / (fw * 1.1), 0.0, 1.0);
+  float vm = v / 5.0;
+  float fwm = fwidth(vm);
+  float major = 1.0 - clamp(abs(fract(vm - 0.5) - 0.5) / (fwm * 1.6), 0.0, 1.0);
+
+  float focus = 0.25 + 0.9 * blob(uv, vec2(0.62, 0.3), 0.6) + 0.75 * blob(uv, vec2(-0.7, -0.35), 0.55);
+  vec3 lc = mix(CYAN, VIOLET, smoothstep(0.2, 0.8, h + 0.25 * uv.x));
+  col += lc * (minor * 0.16 + major * 0.34) * focus;
+
+  vec2 gp = uv * 30.0;
+  vec2 gf = abs(fract(gp) - 0.5);
+  float dotg = exp(-dot(gf, gf) * 300.0);
+  col += CYAN * dotg * 0.08;
+
+  for (int i = 0; i < 6; i++) {
+    float fi = float(i);
+    vec2 c = (hash22(vec2(fi * 7.1, 3.3 + uSeed)) - 0.5) * vec2(1.6, 0.9);
+    float dd = length(uv - c);
+    float ring = exp(-abs(dd - 0.022) * 700.0) + exp(-dd * dd * 40000.0);
+    float crossh = exp(-abs(uv.x - c.x) * 900.0) * step(dd, 0.05) + exp(-abs(uv.y - c.y) * 900.0) * step(dd, 0.05);
+    col += mix(CYAN, GOLD, step(4.5, fi)) * (ring * 0.6 + crossh * 0.25);
+  }
+
+  col += CYAN * 0.07 * blob(uv, vec2(0.7, 0.35), 0.55) + VIOLET * 0.06 * blob(uv, vec2(-0.75, -0.4), 0.55);
+  return col * mix(0.55, 1.0, vignette(uv));
+}
+
+void main() {
+  vec2 fc = gl_FragCoord.xy;
+  vec2 uv = (fc - 0.5 * uRes) / uRes.y;
+  vec3 col;
+  if (uScene == 0) col = sceneApp(uv);
+  else if (uScene == 1) col = sceneAuth(uv);
+  else if (uScene == 2) col = sceneResults(uv);
+  else if (uScene == 3) col = sceneDisputes(uv);
+  else col = sceneAdmin(uv);
+
+  col = 1.0 - exp(-col * 1.25);
+  col += (hash12(fc + uSeed * 91.0) - 0.5) * (2.5 / 255.0);
+  outColor = vec4(clamp(col, 0.0, 1.0), 1.0);
+}
+</script>
+    <script>
+      const SCENES = { app: 0, auth: 1, results: 2, disputes: 3, admin: 4 };
+      const params = new URLSearchParams(location.search);
+      const scene = params.get('scene') || 'app';
+      const width = Number(params.get('w') || 2560);
+      const height = Number(params.get('h') || 1440);
+      const quality = Number(params.get('q') || 0.86);
+      const seed = Number(params.get('seed') || 1);
+
+      const canvas = document.getElementById('c');
+      canvas.width = width;
+      canvas.height = height;
+      const gl = canvas.getContext('webgl2', { preserveDrawingBuffer: true, antialias: false });
+
+      function compile(type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(shader));
+        return shader;
+      }
+
+      try {
+        if (!gl) throw new Error('WebGL2 unavailable');
+        const program = gl.createProgram();
+        gl.attachShader(
+          program,
+          compile(gl.VERTEX_SHADER, '#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}')
+        );
+        gl.attachShader(program, compile(gl.FRAGMENT_SHADER, document.getElementById('frag').textContent));
+        gl.linkProgram(program);
+        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(program));
+        gl.useProgram(program);
+
+        const buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+        const loc = gl.getAttribLocation(program, 'p');
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+        gl.uniform2f(gl.getUniformLocation(program, 'uRes'), width, height);
+        gl.uniform1i(gl.getUniformLocation(program, 'uScene'), SCENES[scene] ?? 0);
+        gl.uniform1f(gl.getUniformLocation(program, 'uSeed'), seed);
+        gl.viewport(0, 0, width, height);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        gl.finish();
+
+        const preview = document.createElement('canvas');
+        preview.width = 1280;
+        preview.height = Math.round((1280 * height) / width);
+        preview.getContext('2d').drawImage(canvas, 0, 0, preview.width, preview.height);
+
+        window.__result = {
+          webp: canvas.toDataURL('image/webp', quality),
+          preview: preview.toDataURL('image/jpeg', 0.9)
+        };
+      } catch (error) {
+        window.__result = { error: String(error && error.message ? error.message : error) };
+      }
+</script>
+  </body>
+</html>
