@@ -29,11 +29,22 @@ async function start() {
     console.log(`[server] expecting the client at ${env.clientUrl}`);
   });
 
-  const shutdown = async (signal) => {
+  // closeAllConnections matters here: socket.io keep-alives would otherwise keep
+  // the server open long past Ctrl+C, which is what left the port held.
+  let closing = false;
+  const shutdown = (signal) => {
+    if (closing) process.exit(0);
+    closing = true;
     console.log(`\n[server] ${signal} received — shutting down`);
-    io.close();
-    httpServer.close(() => process.exit(0));
-    setTimeout(() => process.exit(0), 3000).unref();
+    const done = () => process.exit(0);
+    setTimeout(done, 1500);
+    try {
+      io.close();
+    } catch {
+      /* already closed */
+    }
+    httpServer.closeAllConnections?.();
+    httpServer.close(done);
   };
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));

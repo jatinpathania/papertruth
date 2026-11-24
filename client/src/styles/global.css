@@ -627,60 +627,15 @@ main {
   position: relative;
   isolation: isolate;
   border: 1px solid var(--card-border, var(--glass-border));
-  background: radial-gradient(520px circle at var(--mx) var(--my), var(--spot-color, color-mix(in srgb, var(--brand) 8%, transparent)), transparent 42%),
+  background: radial-gradient(420px circle at var(--mx) var(--my), var(--spot-color, color-mix(in srgb, var(--brand) 5%, transparent)), transparent 40%),
     var(--card-bg, linear-gradient(160deg, rgba(22, 31, 48, 0.93), rgba(8, 12, 20, 0.93)));
   box-shadow: var(--glass-shine), var(--card-shadow, 0 12px 32px rgba(0, 0, 0, 0.32));
   backdrop-filter: var(--card-blur, var(--blur));
   -webkit-backdrop-filter: var(--card-blur, var(--blur));
 }
-:where(
-    .card,
-    .stat,
-    .stat-tile,
-    .exam-card,
-    .step-card,
-    .feature-card,
-    .dispute-tile,
-    .option-tile,
-    .method-card,
-    .explain-card,
-    .qcard,
-    .cta-band,
-    .auth-card,
-    .glass
-  )::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  z-index: 2;
-  padding: 1px;
-  border-radius: inherit;
-  background: radial-gradient(260px circle at var(--mx) var(--my), var(--rim-color, color-mix(in srgb, var(--brand-strong) 85%, transparent)), transparent 70%);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 320ms ease;
-}
-:where(
-    .card,
-    .stat,
-    .stat-tile,
-    .exam-card,
-    .step-card,
-    .feature-card,
-    .dispute-tile,
-    .option-tile,
-    .method-card,
-    .explain-card,
-    .qcard,
-    .cta-band,
-    .auth-card,
-    .glass
-  ):hover::after {
-  opacity: 1;
-}
+/* The cursor-following glow rim used to sit on all fourteen surfaces at once,
+   which is exactly why every box looked like the same box. Shape and structure
+   carry the difference now; see the per-family treatments below. */
 
 .card {
   border-radius: var(--radius);
@@ -2219,54 +2174,65 @@ th.num {
   }
 }
 
+/* One instrument panel, not four floating cards. The 1px grid gap shows the
+   strip's own background through as a hairline, so the dividers stay correct
+   however the columns wrap. The accent lives in the tick and the numeral; the
+   glowing rounded icon chip and the bottom light-bar are gone. */
 .stat-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+  gap: 1px;
   margin-bottom: 44px;
+  background: var(--glass-border);
+  border: 1px solid var(--glass-border);
+  border-radius: 2px;
+  overflow: hidden;
 }
 .stat-tile {
-  --card-bg: linear-gradient(90deg, var(--tile-accent, var(--brand)), var(--tile-accent, var(--brand))) bottom / 100% 2px no-repeat,
-    radial-gradient(200px 120px at 100% 0%, color-mix(in srgb, var(--tile-accent, var(--brand)) 16%, transparent), transparent 70%),
-    linear-gradient(165deg, rgba(22, 31, 48, 0.72), rgba(8, 12, 20, 0.72));
-  --spot-color: color-mix(in srgb, var(--tile-accent, var(--brand)) 12%, transparent);
-  --rim-color: var(--tile-accent, var(--brand));
-  overflow: hidden;
-  padding: 22px 22px 20px;
-  border-radius: var(--radius);
+  --card-bg: none;
+  display: block;
   height: 100%;
+  padding: 18px 20px 20px;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(13, 18, 29, 0.93), rgba(9, 12, 20, 0.95));
+  box-shadow: none;
 }
+/* The emoji went: an accent tick plus a mono label is already the whole
+   signal, and three glyphs competing in one short row read as clutter. */
 .stat-tile-icon {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 42px;
-  margin-bottom: 14px;
-  border-radius: 13px;
-  font-size: 1.25rem;
-  line-height: 1;
-  background: color-mix(in srgb, var(--tile-accent, var(--brand)) 16%, rgba(255, 255, 255, 0.03));
-  border: 1px solid color-mix(in srgb, var(--tile-accent, var(--brand)) 32%, transparent);
-  box-shadow: 0 0 18px color-mix(in srgb, var(--tile-accent, var(--brand)) 18%, transparent);
+  display: none;
+}
+.stat-tile-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  color: var(--text-muted);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.stat-tile-label::before {
+  content: '';
+  flex: none;
+  margin-top: 0.4em;
+  width: 7px;
+  height: 7px;
+  background: var(--tile-accent, var(--brand));
 }
 .stat-tile-value {
   display: block;
+  margin-top: 14px;
   font-family: var(--display);
-  font-size: 2.7rem;
+  font-size: clamp(2.2rem, 1.5rem + 2vw, 3.2rem);
   font-weight: 700;
-  line-height: 1;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
   color: var(--tile-accent, var(--text));
-  text-shadow: 0 0 22px color-mix(in srgb, var(--tile-accent, var(--brand)) 40%, transparent);
-}
-.stat-tile-label {
-  display: block;
-  margin-top: 8px;
-  color: var(--text-muted);
-  font-size: 0.78rem;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
 }
 
 .section {
@@ -2276,30 +2242,25 @@ th.num {
   margin-bottom: 24px;
   max-width: 64ch;
 }
+/* Editorial index mark, not a glowing pill. A rule plus mono small caps reads
+   as a section marker; the pill with its sweeping sheen read as decoration. */
 .section-kicker {
-  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 5px 14px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--brand) 12%, rgba(9, 14, 23, 0.6));
-  border: 1px solid color-mix(in srgb, var(--brand) 34%, transparent);
-  color: var(--brand-strong);
-  font-size: 0.7rem;
+  gap: 12px;
+  margin-bottom: 16px;
+  color: var(--page-accent, var(--brand));
+  font-family: var(--mono);
+  font-size: 0.8rem;
   font-weight: 700;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  overflow: hidden;
 }
-.section-kicker::after {
+.section-kicker::before {
   content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.28) 50%, transparent 70%);
-  transform: translateX(-100%);
-  animation: sheen 3.6s ease-in-out infinite;
+  width: 32px;
+  height: 2px;
+  background: currentColor;
 }
 .section-head h2 {
   font-size: clamp(1.7rem, 3.2vw, 2.3rem);
@@ -3131,7 +3092,11 @@ th.num {
   background: linear-gradient(90deg, var(--page-accent), transparent);
 }
 .section-kicker {
-  color: var(--page-accent);
+  /* Lifted toward white: the accent alone goes muddy at mono small-caps size. */
+  color: color-mix(in srgb, var(--page-accent) 72%, #ffffff);
+}
+.section-kicker::before {
+  background: var(--page-accent);
 }
 
 /* Full-bleed band: escapes the 1180px page column edge to edge */
@@ -3572,21 +3537,41 @@ th.num {
   gap: 16px;
   margin-bottom: clamp(40px, 7vw, 80px);
 }
+/* Stacked sheets. The product reconstructs a paper from many sheets, so the
+   card is literally a small pile of them rather than another glass rectangle. */
 .pillar-card {
+  position: relative;
   height: 100%;
-  padding: 22px;
-  border-radius: 18px;
-  background: var(--glass);
+  padding: 26px 24px 24px;
+  border-radius: 3px;
+  background: linear-gradient(168deg, rgba(24, 33, 51, 0.96), rgba(11, 16, 26, 0.96));
+  border: 1px solid color-mix(in srgb, var(--page-accent) 22%, var(--glass-border));
+  transition: border-color 200ms ease;
+}
+.pillar-card::before,
+.pillar-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: 3px;
+  background: rgba(14, 20, 32, 0.9);
   border: 1px solid var(--glass-border);
-  backdrop-filter: var(--blur);
-  box-shadow: var(--glass-shine);
-  transition: border-color 200ms ease, box-shadow 240ms ease;
 }
-.pillar-card:hover {
-  border-color: color-mix(in srgb, var(--page-accent) 46%, transparent);
-  box-shadow: var(--glass-shine), 0 0 26px color-mix(in srgb, var(--page-accent) 18%, transparent);
+.pillar-card::before { transform: translate(5px, 5px); }
+.pillar-card::after { transform: translate(10px, 10px); opacity: 0.55; }
+.pillar-card:hover { border-color: color-mix(in srgb, var(--page-accent) 55%, transparent); }
+.pillar-icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid color-mix(in srgb, var(--page-accent) 40%, transparent);
+  border-radius: 2px;
+  font-size: 1.15rem;
 }
-.pillar-icon { font-size: 1.6rem; }
+.landing-pillars > * { padding: 0 14px 14px 0; }
+.landing-pillars { padding-right: 2px; }
 .pillar-card h3 { margin: 10px 0 6px; font-size: var(--t-lg); }
 .pillar-card p { margin: 0; font-size: var(--t-sm); color: var(--text-muted); line-height: 1.6; }
 
@@ -3598,27 +3583,37 @@ th.num {
   display: grid;
   gap: 14px;
 }
+/* No box at all. A hairline spine with outlined numerals sitting on it reads as
+   a sequence; three identical rounded panels read as three identical panels. */
+.landing-steps { gap: 0; }
 .landing-step {
+  position: relative;
   display: grid;
-  grid-template-columns: 56px 1fr;
+  grid-template-columns: 74px 1fr;
   align-items: start;
-  gap: 18px;
-  padding: 20px 22px;
-  border-radius: 20px 6px 20px 6px;
-  background: var(--glass-soft);
-  border: 1px solid var(--glass-border);
+  gap: 22px;
+  padding: 26px 0 30px;
+  border: 0;
+  background: none;
 }
-.landing-step:nth-child(even) { border-radius: 6px 20px 6px 20px; }
+.landing-step::before {
+  content: '';
+  position: absolute;
+  left: 36px;
+  top: 62px;
+  bottom: -2px;
+  width: 1px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--page-accent) 45%, transparent), transparent);
+}
+.landing-steps > *:last-child .landing-step::before { display: none; }
 .landing-step-num {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 50%;
-  font: 700 1.5rem/1 var(--display);
-  color: var(--page-accent);
-  border: 1px solid color-mix(in srgb, var(--page-accent) 40%, transparent);
-  background: color-mix(in srgb, var(--page-accent) 10%, transparent);
+  width: 74px;
+  font: 700 clamp(2.4rem, 1.4rem + 3vw, 3.6rem) / 0.8 var(--display);
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px color-mix(in srgb, var(--page-accent) 60%, transparent);
 }
 .landing-step h3 { margin: 2px 0 8px; font-size: var(--t-xl); }
 .landing-step p { margin: 0; color: var(--text-muted); font-size: var(--t-md); line-height: 1.62; max-width: 56ch; }
@@ -3646,26 +3641,71 @@ th.num {
 .about-hero h1 { font-size: clamp(2.1rem, 4.4vw, 3.1rem); margin: 10px 0 14px; }
 .about-lede { max-width: 60ch; color: #c3cfe2; font-size: var(--t-xl); line-height: 1.55; }
 .about-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+/* Spec sheet: a mono header band naming the method, then hairline-separated
+   body copy. Square and technical, nothing like the pillars or the index cards. */
 .about-method {
+  --m: var(--method-majority);
   height: 100%;
-  padding: 22px;
-  border-radius: 20px;
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-top: 3px solid var(--method-majority);
+  padding: 0;
+  border-radius: 2px;
+  background: linear-gradient(180deg, rgba(13, 19, 30, 0.95), rgba(9, 13, 21, 0.95));
+  border: 1px solid color-mix(in srgb, var(--m) 26%, var(--glass-border));
+  overflow: hidden;
 }
-.about-method h3 { margin: 0 0 10px; font-size: var(--t-lg); }
+.about-method h3 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 13px 18px;
+  background: color-mix(in srgb, var(--m) 14%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--m) 30%, transparent);
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.about-method h3::before {
+  content: '';
+  flex: none;
+  width: 9px;
+  height: 9px;
+  background: var(--m);
+}
+.about-method p { padding: 18px; }
 .about-method p { margin: 0; color: var(--text-muted); font-size: var(--t-sm); line-height: 1.62; }
-.about-method--em { border-top-color: var(--method-em); }
-.about-method--sp { border-top-color: var(--method-sp); }
-.about-faq { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.about-method--em { --m: var(--method-em); }
+.about-method--sp { --m: var(--method-sp); }
+/* Questions do not need boxes. A hanging mono marker and generous whitespace
+   make a list of four read faster than four translucent panels. */
+.about-faq { display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(24px, 3vw, 42px); }
 .about-faq-item {
-  padding: 20px 22px;
-  border-radius: 18px;
-  background: var(--glass-soft);
-  border: 1px solid var(--glass-border);
+  padding: 0 0 0 46px;
+  border: 0;
+  background: none;
 }
-.about-faq-item h3 { margin: 0 0 10px; font-size: var(--t-lg); color: var(--page-accent); }
+.about-faq-item h3 {
+  position: relative;
+  margin: 0 0 10px;
+  font-size: var(--t-lg);
+  color: var(--text);
+}
+.about-faq-item h3::before {
+  content: 'Q';
+  position: absolute;
+  left: -46px;
+  top: -1px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  color: var(--page-accent);
+  font-family: var(--mono);
+  font-size: var(--t-sm);
+  font-weight: 700;
+  border: 1px solid color-mix(in srgb, var(--page-accent) 45%, transparent);
+}
 .about-faq-item p { margin: 0; color: var(--text-muted); font-size: var(--t-md); line-height: 1.62; }
 
 /* ---- Results index ---- */
@@ -3785,16 +3825,42 @@ th.num {
 }
 
 .guarantees { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+/* Index cards with a clipped corner and a counted numeral. The accent lives in
+   the number and the icon frame, not in a coloured stripe down the side. */
+.guarantees { counter-reset: guarantee; }
 .guarantee-card {
+  position: relative;
+  counter-increment: guarantee;
   height: 100%;
-  padding: 24px;
-  border-radius: 20px 6px 20px 6px;
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-left: 3px solid var(--tile-accent, var(--page-accent));
+  padding: 26px 24px 54px;
+  background: linear-gradient(200deg, rgba(20, 28, 44, 0.95), rgba(9, 13, 21, 0.96));
+  border: 1px solid color-mix(in srgb, var(--tile-accent) 24%, var(--glass-border));
+  border-radius: 2px;
+  clip-path: polygon(0 0, calc(100% - 22px) 0, 100% 22px, 100% 100%, 0 100%);
 }
-.guarantees > *:nth-child(even) .guarantee-card { border-radius: 6px 20px 6px 20px; }
-.guarantee-icon { font-size: 1.5rem; }
+.guarantee-card::before {
+  content: counter(guarantee, decimal-leading-zero);
+  position: absolute;
+  right: 18px;
+  bottom: 6px;
+  font: 700 3rem/1 var(--display);
+  letter-spacing: -0.04em;
+  color: transparent;
+  -webkit-text-stroke: 1px color-mix(in srgb, var(--tile-accent) 38%, transparent);
+  pointer-events: none;
+}
+.guarantee-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  font-size: 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--tile-accent) 45%, transparent);
+}
+.guarantee-card h3 {
+  padding-bottom: 10px;
+  border-bottom: 1px dashed color-mix(in srgb, var(--tile-accent) 28%, transparent);
+}
 .guarantee-card h3 { margin: 10px 0 8px; font-size: var(--t-lg); }
 .guarantee-card p { margin: 0; color: var(--text-muted); font-size: var(--t-sm); line-height: 1.62; }
 @media (max-width: 980px) { .guarantees { grid-template-columns: 1fr; } }

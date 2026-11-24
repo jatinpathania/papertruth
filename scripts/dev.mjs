@@ -51,14 +51,9 @@ async function main() {
   const runApi = !args.has('--web-only');
   const runWeb = !args.has('--api-only');
 
-  const busy = [];
-  if (runApi && (await isPortInUse(apiPort))) busy.push(apiPort);
-  if (runWeb && (await isPortInUse(5173))) busy.push(5173);
-  if (busy.length > 0) {
-    log('error', `port ${busy.join(' and ')} already in use — PaperTruth may still be running.`);
-    log('error', 'Free them with:  npm run stop     (then npm run dev again)');
-    process.exit(1);
-  }
+  // A busy dev port always means a previous run of THIS project is still around,
+  // so clear it and carry on. Refusing to start just moved the work to the user.
+  await reclaimPorts([runApi ? apiPort : null, runWeb ? 5173 : null].filter(Boolean));
 
   const mongo = readMongoUri();
   if (await isPortOpen(mongo.host, mongo.port)) {
@@ -132,6 +127,33 @@ function readMongoUri() {
   uri = uri || 'mongodb://127.0.0.1:27017/papertruth';
   const match = uri.match(/^mongodb(?:\+srv)?:\/\/(?:[^@/]+@)?([^:/,?]+)(?::(\d+))?/i);
   return { uri, host: match?.[1] || '127.0.0.1', port: Number(match?.[2] || 27017) };
+}
+
+async function reclaimPorts(ports) {
+  const busy = [];
+  for (const port of ports) {
+    if (await isPortInUse(port)) busy.push(port);
+  }
+  if (busy.length === 0) return;
+
+  log('warn', `port ${busy.join(' and ')} still held by a previous run — clearing`);
+  freePorts(busy, {
+    onKill: (pid, port, killed) =>
+      log(killed ? 'dev' : 'error', `${killed ? 'stopped' : 'could not stop'} pid ${pid} on port ${port}`)
+  });
+
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const stillBusy = [];
+    for (const port of busy) {
+      if (await isPortInUse(port)) stillBusy.push(port);
+    }
+    if (stillBusy.length === 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+
+  log('error', `port ${busy.join(' and ')} could not be freed — something outside PaperTruth is using it.`);
+  log('error', 'Change PORT in server/.env, or stop that program first.');
+  process.exit(1);
 }
 
 async function isPortInUse(port) {

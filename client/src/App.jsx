@@ -78,7 +78,7 @@ export default function App() {
             <Page className="not-found">
             <div className="hero-xl mt-3">
               <div className="hero-xl-inner">
-                <span className="section-kicker">● Error 404</span>
+                <span className="section-kicker">Error 404</span>
                 <Headline className="hero-title" lines={['This page', { text: 'is not on', grad: true }, 'the paper.']} />
                 <p className="hero-lede">
                   The link may be old, or the exam may have been removed. Everything that
