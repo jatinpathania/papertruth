@@ -77,7 +77,7 @@ async function main() {
   console.log('');
   log('dev', `API   ${paint(colours.dim, `http://localhost:${apiPort}`)}`);
   log('dev', `App   ${paint(colours.dim, 'http://localhost:5173')}   ← open this`);
-  log('dev', `Sign in as ${paint(colours.dim, 'admin@papertruth.com / admin123')} or ${paint(colours.dim, 'aarav@student.papertruth.com / student123')}`);
+  log('dev', `Seeded sign-ins are printed by ${paint(colours.dim, 'npm run simulate')}`);
   log('dev', `Press ${paint(colours.dim, 'Ctrl+C')} to stop both.\n`);
 }
 
@@ -175,6 +175,11 @@ function isPortOpen(host, port, timeout = 1500) {
 }
 
 async function maybeSeed(force) {
+  // The seeder carries real demo credentials, so it is kept out of the repo.
+  if (!existsSync(path.join(serverDir, 'scripts', 'simulate.js'))) {
+    log('warn', 'server/scripts/simulate.js is not present — skipping the seed');
+    return;
+  }
   let shouldSeed = force;
 
   if (!shouldSeed) {

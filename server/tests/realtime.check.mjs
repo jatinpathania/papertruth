@@ -39,9 +39,15 @@ const health = await call('/health').catch(() => null);
 if (!health) fail(`the API is not answering on ${API}. Start it with: npm run dev`);
 ok(`API is up (${API})`);
 
+// Not hardcoded: these are real sign-ins for a deployed instance.
+const adminEmail = process.env.ADMIN_EMAIL;
+const adminPassword = process.env.ADMIN_PASSWORD;
+if (!adminEmail || !adminPassword) {
+  fail('set ADMIN_EMAIL and ADMIN_PASSWORD (the admin seeded by npm run simulate)');
+}
 const admin = await call('/auth/login', {
   method: 'POST',
-  body: { email: 'admin@papertruth.com', password: 'admin123' }
+  body: { email: adminEmail, password: adminPassword }
 });
 const { exams } = await call('/exams', { token: admin.token });
 const exam = exams.find((e) => e.acceptingSubmissions) || exams[0];

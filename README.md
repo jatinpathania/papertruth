@@ -85,16 +85,18 @@ npm run verify       # tests + production build
 with a fresh `JWT_SECRET` generated for you. `VITE_API_URL` is intentionally blank — the
 Vite dev server proxies `/api`, so the browser only ever talks to one origin.
 
-### Demo accounts
+### Accounts
 
-| Role    | Email                          | Password     |
-| ------- | ------------------------------ | ------------ |
-| Admin   | `admin@papertruth.com`         | `admin123`   |
-| Student | `aarav@student.papertruth.com` | `student123` |
+Self-registration always creates a student — `/register` hardcodes the role, since a
+client that could pick its own would be an obvious privilege-escalation hole. Admin
+accounts therefore come only from the seeder.
 
-Four more students exist (`diya@`, `kabir@`, `meera@`, `rohan@`), all `student123`.
-Self-registration always creates a student; admin accounts come only from the seed
-script, since a client that could pick its own role would be a privilege-escalation hole.
+The seeder (`server/scripts/simulate.js`) is deliberately **not** in this repository: it
+carries the sign-in credentials for the deployed instance. The simulation modules it
+drives are here — `server/src/services/simulation/generateCohort.js` builds the cohort,
+and `server/tests/` covers every consensus module it exercises — so the results below are
+reproducible from the code, but you will need your own seeding entry point and your own
+accounts.
 
 ### A five-minute tour
 

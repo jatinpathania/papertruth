@@ -16,3 +16,6 @@ npm-debug.log*
 .idea/
 .DS_Store
 Thumbs.db
+
+# local-only seeding script — contains real demo credentials
+server/scripts/simulate.js
