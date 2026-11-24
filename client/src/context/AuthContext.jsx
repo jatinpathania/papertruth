@@ -34,8 +34,12 @@ export function AuthProvider({ children }) {
     return me;
   }, []);
 
-  const register = useCallback(async (details) => {
-    const { token, user: me } = await api.register(details);
+  // Registration is two steps now: this one only sends the code. The account
+  // does not exist until verifyRegistration succeeds.
+  const register = useCallback((details) => api.register(details), []);
+
+  const verifyRegistration = useCallback(async (details) => {
+    const { token, user: me } = await api.verifyRegistration(details);
     tokenStore.set(token);
     setUser(me);
     return me;
@@ -47,8 +51,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, isAdmin: user?.role === 'ADMIN' }),
-    [user, loading, login, register, logout]
+    () => ({ user, loading, login, register, verifyRegistration, logout, isAdmin: user?.role === 'ADMIN' }),
+    [user, loading, login, register, verifyRegistration, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

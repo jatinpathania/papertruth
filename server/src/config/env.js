@@ -15,7 +15,12 @@ export const env = {
   jwtSecret: process.env.JWT_SECRET || '',
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
   geminiApiKey: (process.env.GEMINI_API_KEY || '').trim(),
-  geminiModel: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004'
+  geminiModel: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004',
+  smtpHost: (process.env.SMTP_HOST || '').trim(),
+  smtpPort: Number(process.env.SMTP_PORT || 587),
+  smtpUser: (process.env.SMTP_USER || '').trim(),
+  smtpPass: process.env.SMTP_PASS || '',
+  mailFrom: (process.env.MAIL_FROM || process.env.SMTP_USER || 'PaperTruth <no-reply@papertruth.app>').trim()
 };
 
 export const isProduction = env.nodeEnv === 'production';
@@ -34,7 +39,8 @@ export function resolveConfig({ logger = console } = {}) {
 
   logger.log(
     `[config] mode=${env.nodeEnv} port=${env.port} mongo=${redactUri(env.mongoUri)} ` +
-      `gemini=${geminiEnabled ? 'enabled' : 'disabled (edit-distance grouping only)'}`
+      `gemini=${geminiEnabled ? 'enabled' : 'disabled (edit-distance grouping only)'} ` +
+      `mail=${env.smtpHost && env.smtpUser ? 'smtp' : 'console (dev only)'}`
   );
   return env;
 }

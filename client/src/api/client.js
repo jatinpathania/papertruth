@@ -63,6 +63,8 @@ export const api = {
   del: (path, options) => request(path, { ...options, method: 'DELETE' }),
 
   register: (payload) => request('/auth/register', { method: 'POST', body: payload }),
+  verifyRegistration: (payload) => request('/auth/register/verify', { method: 'POST', body: payload }),
+  resendRegistrationCode: (payload) => request('/auth/register/resend', { method: 'POST', body: payload }),
   login: (payload) => request('/auth/login', { method: 'POST', body: payload }),
   me: () => request('/auth/me'),
 

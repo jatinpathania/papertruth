@@ -5,3 +5,4 @@ export { Submission } from './Submission.js';
 export { ConsensusResult, CONSENSUS_METHODS } from './ConsensusResult.js';
 export { DisputeThread } from './DisputeThread.js';
 export { OfficialKey } from './OfficialKey.js';
+export { EmailVerification } from './EmailVerification.js';
