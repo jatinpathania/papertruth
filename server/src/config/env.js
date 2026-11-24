@@ -19,8 +19,9 @@ export const env = {
   smtpHost: (process.env.SMTP_HOST || '').trim(),
   smtpPort: Number(process.env.SMTP_PORT || 587),
   smtpUser: (process.env.SMTP_USER || '').trim(),
-  smtpPass: process.env.SMTP_PASS || '',
-  mailFrom: (process.env.MAIL_FROM || process.env.SMTP_USER || 'PaperTruth <no-reply@papertruth.app>').trim()
+  // Google hands out app passwords in spaced groups of four; people paste them
+  // as shown, and SMTP auth then fails for no visible reason.
+  smtpPass: (process.env.SMTP_PASS || '').replace(/\s+/g, '')
 };
 
 export const isProduction = env.nodeEnv === 'production';

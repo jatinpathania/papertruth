@@ -32,7 +32,10 @@ export async function sendVerificationCode({ to, name, code }) {
   }
 
   await getTransport().sendMail({
-    from: env.mailFrom,
+    // Always the authenticated account. Gmail relays a foreign From with a
+    // 250 OK and the receiving side then drops it as spoofed, which looks
+    // from the outside like nothing was ever sent.
+    from: `PaperTruth <${env.smtpUser}>`,
     to,
     subject: `${code} is your PaperTruth verification code`,
     text:
