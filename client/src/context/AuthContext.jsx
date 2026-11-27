@@ -1,12 +1,24 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { api, tokenStore } from '../api/client.js';
+import { api, ApiError, tokenStore, sessionFromToken } from '../api/client.js';
 
 const AuthContext = createContext(null);
 
+// A token that no longer parses, or has run out, is worth less than no token:
+// it would send the app off to /me only to be told what it could have known
+// here. Drop it now so the signed-out view is right the first time it paints.
+function restoreSession() {
+  const session = sessionFromToken();
+  if (!session && tokenStore.get()) tokenStore.clear();
+  return session;
+}
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(Boolean(tokenStore.get()));
+  // Start from what the stored token already says. Waiting for /me instead
+  // meant the header painted "Login / Register" to someone who was signed in,
+  // then swapped it out seconds later — on a cold serverless function that is
+  // long enough to click the wrong thing.
+  const [user, setUser] = useState(restoreSession);
 
   useEffect(() => {
     if (!tokenStore.get()) return;
@@ -14,8 +26,16 @@ export function AuthProvider({ children }) {
     api
       .me()
       .then(({ user: me }) => active && setUser(me))
-      .catch(() => tokenStore.clear())
-      .finally(() => active && setLoading(false));
+      .catch((error) => {
+        if (!active) return;
+        // A rejected token is a dead session. Anything else — the server asleep,
+        // the network down — is not, so the restored session stands rather than
+        // signing someone out because a request happened to fail.
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          tokenStore.clear();
+          setUser(null);
+        }
+      });
     return () => {
       active = false;
     };
@@ -62,7 +82,6 @@ export function AuthProvider({ children }) {
   const value = useMemo(
     () => ({
       user,
-      loading,
       login,
       register,
       verifyRegistration,
@@ -70,7 +89,7 @@ export function AuthProvider({ children }) {
       logout,
       isAdmin: user?.role === 'ADMIN'
     }),
-    [user, loading, login, register, verifyRegistration, resetPassword, logout]
+    [user, login, register, verifyRegistration, resetPassword, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -83,16 +102,9 @@ export function useAuth() {
 }
 
 export function RequireAuth({ children, adminOnly = false }) {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
 
-  if (loading) {
-    return (
-      <div className="loading-block">
-        <span className="spinner" /> Restoring your session…
-      </div>
-    );
-  }
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   if (adminOnly && user.role !== 'ADMIN') {
     return (

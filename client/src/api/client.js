@@ -7,6 +7,28 @@ export const tokenStore = {
   clear: () => localStorage.removeItem(TOKEN_KEY)
 };
 
+// The token already says who it belongs to, so the first paint does not have to
+// wait on the network to know whether anyone is signed in. These claims are for
+// rendering only — the signature cannot be checked here, so every request still
+// carries the token and the server decides what it is actually allowed to do.
+export function sessionFromToken(token = tokenStore.get()) {
+  if (!token) return null;
+  const [, payload] = token.split('.');
+  if (!payload) return null;
+  try {
+    const b64 = payload.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(payload.length / 4) * 4, '=');
+    const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+    const claims = JSON.parse(new TextDecoder().decode(bytes));
+    if (!claims?.sub) return null;
+    // An expired token is no session at all; showing the chip and then yanking
+    // it away is the very flicker this exists to avoid.
+    if (claims.exp && claims.exp * 1000 <= Date.now()) return null;
+    return { id: claims.sub, name: claims.name || '', role: claims.role };
+  } catch {
+    return null;
+  }
+}
+
 export class ApiError extends Error {
   constructor(status, message, details) {
     super(message);
