@@ -26,6 +26,8 @@
   --text-on-brand: #03121a;
 
   --brand: #22e2f5;
+  /* Halo behind the logo: between the UI's cyan and the mark's own green. */
+  --mark-glow: #37d6b0;
   --brand-strong: #7cf3ff;
   --brand-soft: color-mix(in srgb, var(--brand) 16%, var(--surface));
 
@@ -339,34 +341,46 @@ main {
   place-items: center;
   width: 32px;
   height: 32px;
-  border-radius: 10px;
-  background: var(--grad-primary);
-  color: var(--text-on-brand);
-  font-size: 16px;
-  font-weight: 800;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), inset 0 -3px 0 rgba(0, 0, 0, 0.2), var(--glow-brand);
-  transition: transform 600ms var(--ease-spring);
-  transform: perspective(200px) rotateY(0deg);
+  /* No plate behind it any more: the glow is cast by the artwork's own edges,
+     which is why this is drop-shadow and not box-shadow. The hue sits between
+     the site's cyan and the logo's own green so the halo reads as light on the
+     mark rather than a second colour arguing with it. */
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--mark-glow) 34%, transparent))
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  transition: transform 600ms var(--ease-spring), filter 320ms ease;
 }
+.brand-mark img {
+  position: relative;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+/* The old mark flipped on hover, which a symmetric tick could carry but a
+   sheet of paper cannot — it just read as back-to-front. */
 .brand:hover .brand-mark {
-  transform: perspective(200px) rotateY(180deg) rotateX(10deg);
+  transform: scale(1.07);
+  filter: drop-shadow(0 0 9px color-mix(in srgb, var(--mark-glow) 62%, transparent))
+    drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 .brand-mark::after {
   content: '';
   position: absolute;
-  inset: -4px;
-  border-radius: 13px;
-  border: 1px solid color-mix(in srgb, var(--brand) 45%, transparent);
-  animation: markPulse 3.2s ease-in-out infinite;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--mark-glow) 18%, transparent), transparent 60%);
+  animation: markPulse 3.6s ease-in-out infinite;
+  pointer-events: none;
 }
 @keyframes markPulse {
   0%,
   100% {
-    opacity: 0.2;
-    transform: scale(0.96);
+    opacity: 0.3;
+    transform: scale(0.94);
   }
   50% {
-    opacity: 0.9;
+    opacity: 0.7;
     transform: scale(1.04);
   }
 }
@@ -503,8 +517,6 @@ main {
 .site-footer .brand-mark {
   width: 24px;
   height: 24px;
-  font-size: 12px;
-  border-radius: 7px;
 }
 .site-footer .brand-mark::after {
   display: none;

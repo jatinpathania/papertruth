@@ -4,10 +4,13 @@ import { motion, useMotionValueEvent, useScroll } from 'framer-motion';
 import { useAuth } from '../context/AuthContext.jsx';
 import { prefetch, prefetchIdle } from '../routes.js';
 
+// The official mark, cut out of its white backing so only the logo shows. It
+// is the same file the favicon uses, and it is eager rather than lazy: it sits
+// in the first thing painted, where a late-arriving logo is a visible pop.
 export function BrandMark() {
   return (
     <span className="brand-mark" aria-hidden="true">
-      ✓
+      <img src="/logo.png" alt="" width="256" height="256" decoding="async" />
     </span>
   );
 }
