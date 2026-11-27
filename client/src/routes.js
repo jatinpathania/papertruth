@@ -4,6 +4,8 @@ import { lazy } from 'react';
 // link can warm the chunk on hover, which is what makes navigation feel instant.
 const defs = {
   register: () => import('./pages/Register.jsx'),
+  forgotPassword: () => import('./pages/ForgotPassword.jsx'),
+  resetPassword: () => import('./pages/ResetPassword.jsx'),
   about: () => import('./pages/About.jsx'),
   results: () => import('./pages/Results.jsx'),
   examList: () => import('./pages/ExamList.jsx'),
@@ -20,6 +22,8 @@ const defs = {
 };
 
 export const Register = lazy(defs.register);
+export const ForgotPassword = lazy(defs.forgotPassword);
+export const ResetPassword = lazy(defs.resetPassword);
 export const About = lazy(defs.about);
 export const Results = lazy(defs.results);
 export const ExamList = lazy(defs.examList);
@@ -36,6 +40,8 @@ export const Integrity = lazy(defs.integrity);
 
 const byPath = [
   [/^\/register/, defs.register],
+  [/^\/forgot-password/, defs.forgotPassword],
+  [/^\/reset-password/, defs.resetPassword],
   [/^\/about/, defs.about],
   [/^\/results/, defs.results],
   [/^\/exams\/[^/]+\/submit/, defs.submitAnswers],

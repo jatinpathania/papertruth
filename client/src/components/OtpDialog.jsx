@@ -4,11 +4,15 @@ import { AnimatePresence, motion } from 'framer-motion';
 
 const LENGTH = 6;
 
+// Shared by registration and by the forgotten-password flow — the two differ
+// only in the kicker and the label on the confirm button.
 export default function OtpDialog({
   open,
   email,
   resendAfterSeconds = 60,
   devCode = null,
+  kicker = 'Step 2 of 2',
+  submitLabel = 'Verify and create account',
   onVerify,
   onResend,
   onClose
@@ -176,7 +180,7 @@ export default function OtpDialog({
               ✕
             </button>
 
-            <span className="section-kicker">Step 2 of 2</span>
+            <span className="section-kicker">{kicker}</span>
             <h2 id="otp-title" className="otp-title">Check your email</h2>
             <p className="otp-lede">
               We sent a six-digit code to <strong>{email}</strong>. It expires in 10 minutes.
@@ -229,7 +233,7 @@ export default function OtpDialog({
               onClick={() => submit(code)}
             >
               {busy ? <span className="spinner" /> : null}
-              {busy ? 'Verifying…' : 'Verify and create account'}
+              {busy ? 'Verifying…' : submitLabel}
             </button>
 
             <div className="otp-footer">

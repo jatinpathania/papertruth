@@ -6,36 +6,17 @@ import { api } from '../api/client.js';
 import { ErrorNote } from '../components/ui.jsx';
 import AuthShell from '../components/AuthShell.jsx';
 import OtpDialog from '../components/OtpDialog.jsx';
-
-function passwordStrength(value) {
-  let score = 0;
-  if (value.length >= 6) score += 1;
-  if (value.length >= 10) score += 1;
-  if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1;
-  if (/\d/.test(value) || /[^A-Za-z0-9]/.test(value)) score += 1;
-  return score;
-}
-const STRENGTH = [
-  { label: 'Too short', color: 'var(--danger)' },
-  { label: 'Okay', color: 'var(--warn)' },
-  { label: 'Good', color: 'var(--method-sp)' },
-  { label: 'Strong', color: 'var(--brand)' },
-  { label: 'Excellent', color: 'var(--ok)' }
-];
+import PasswordField from '../components/PasswordField.jsx';
 
 export default function Register() {
   const { register, verifyRegistration } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ name: '', email: '', password: '' });
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   // Set once the server has accepted the details and emailed a code. The account
   // still does not exist at this point — the dialog is what creates it.
   const [pending, setPending] = useState(null);
-
-  const strength = passwordStrength(form.password);
-  const meter = form.password.length < 6 ? STRENGTH[0] : STRENGTH[strength];
 
   const submit = async (event) => {
     event.preventDefault();
@@ -105,52 +86,10 @@ export default function Register() {
             />
           </div>
         </div>
-        <div className="field">
-          <label htmlFor="password">Password</label>
-          <div className="input-wrap">
-            <span className="input-icon" aria-hidden="true">
-              🔒
-            </span>
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              autoComplete="new-password"
-              placeholder="At least 6 characters"
-              minLength={6}
-              required
-              value={form.password}
-              onChange={(event) => setForm({ ...form, password: event.target.value })}
-              aria-describedby="password-strength"
-            />
-            <button
-              type="button"
-              className="input-action small subtle"
-              onClick={() => setShowPassword((v) => !v)}
-              aria-pressed={showPassword}
-              aria-label={showPassword ? 'Hide password' : 'Show password'}
-            >
-              {showPassword ? 'Hide' : 'Show'}
-            </button>
-          </div>
-          <div className="strength" id="password-strength" aria-live="polite">
-            <span className="strength-track">
-              {[0, 1, 2, 3].map((step) => (
-                <motion.span
-                  key={step}
-                  className="strength-seg"
-                  animate={{
-                    backgroundColor: form.password.length >= 6 && step < strength ? meter.color : 'rgba(255,255,255,0.08)',
-                    scaleY: form.password.length >= 6 && step < strength ? 1 : 0.7
-                  }}
-                  transition={{ duration: 0.3 }}
-                />
-              ))}
-            </span>
-            <span className="tiny" style={{ color: form.password ? meter.color : 'var(--text-muted)' }}>
-              {form.password ? meter.label : 'At least 6 characters'}
-            </span>
-          </div>
-        </div>
+        <PasswordField
+          value={form.password}
+          onChange={(password) => setForm({ ...form, password })}
+        />
 
         {error && <ErrorNote error={error} />}
 

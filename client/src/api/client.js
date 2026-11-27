@@ -68,6 +68,11 @@ export const api = {
   login: (payload) => request('/auth/login', { method: 'POST', body: payload }),
   me: () => request('/auth/me'),
 
+  forgotPassword: (payload) => request('/auth/password/forgot', { method: 'POST', body: payload }),
+  resendPasswordCode: (payload) => request('/auth/password/resend', { method: 'POST', body: payload }),
+  verifyPasswordCode: (payload) => request('/auth/password/verify', { method: 'POST', body: payload }),
+  resetPassword: (payload) => request('/auth/password/reset', { method: 'POST', body: payload }),
+
   exams: () => request('/exams'),
   exam: (id) => request(`/exams/${id}`),
   createExam: (payload) => request('/exams', { method: 'POST', body: payload }),

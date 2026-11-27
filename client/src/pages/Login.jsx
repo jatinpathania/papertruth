@@ -92,6 +92,9 @@ export default function Login() {
       </form>
 
       <p className="small muted mt-2 mb-0 center">
+        <Link to="/forgot-password">Forgot your password?</Link>
+      </p>
+      <p className="small muted mt-1 mb-0 center">
         No account? <Link to="/register">Register as a student</Link>
       </p>
     </AuthShell>

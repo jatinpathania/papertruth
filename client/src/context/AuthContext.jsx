@@ -45,14 +45,32 @@ export function AuthProvider({ children }) {
     return me;
   }, []);
 
+  // The reset has already proved the person reads that inbox, so finishing it
+  // signs them in rather than dropping them back on the sign-in form.
+  const resetPassword = useCallback(async (details) => {
+    const { token, user: me } = await api.resetPassword(details);
+    tokenStore.set(token);
+    setUser(me);
+    return me;
+  }, []);
+
   const logout = useCallback(() => {
     tokenStore.clear();
     setUser(null);
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, verifyRegistration, logout, isAdmin: user?.role === 'ADMIN' }),
-    [user, loading, login, register, verifyRegistration, logout]
+    () => ({
+      user,
+      loading,
+      login,
+      register,
+      verifyRegistration,
+      resetPassword,
+      logout,
+      isAdmin: user?.role === 'ADMIN'
+    }),
+    [user, loading, login, register, verifyRegistration, resetPassword, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -91,6 +91,14 @@ Self-registration always creates a student — `/register` hardcodes the role, s
 client that could pick its own would be an obvious privilege-escalation hole. Admin
 accounts therefore come only from the seeder.
 
+A forgotten password is recovered the same way an address is proved at sign-up: a
+six-digit code is mailed out, and proving it buys a short-lived ticket that the reset
+page spends on the new password. `/api/auth/password/forgot` answers identically whether
+or not the address has an account, so the form cannot be used to find out who is
+registered here. Without SMTP configured, the code is returned in the response and shown
+in the dialog, which is how the flow is exercised locally — that only ever happens
+outside production.
+
 The seeder (`server/scripts/simulate.js`) is deliberately **not** in this repository: it
 carries the sign-in credentials for the deployed instance. The simulation modules it
 drives are here — `server/src/services/simulation/generateCohort.js` builds the cohort,

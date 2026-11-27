@@ -16,10 +16,12 @@ import {
   DisputeDetail,
   Disputes,
   ExamList,
+  ForgotPassword,
   Integrity,
   Monitor,
   MyResults,
   Register,
+  ResetPassword,
   Results,
   SubmitAnswers,
   Validation
@@ -49,6 +51,14 @@ export default function App() {
       <Route
         path="/register"
         element={user ? <Navigate to="/exams" replace /> : <Register />}
+      />
+      <Route
+        path="/forgot-password"
+        element={user ? <Navigate to="/exams" replace /> : <ForgotPassword />}
+      />
+      <Route
+        path="/reset-password"
+        element={user ? <Navigate to="/exams" replace /> : <ResetPassword />}
       />
 
       <Route element={<Layout />}>
