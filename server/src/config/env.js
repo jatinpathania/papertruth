@@ -13,7 +13,7 @@ export const env = {
   mongoUri: process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/papertruth',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   jwtSecret: process.env.JWT_SECRET || '',
-  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  jwtExpiresIn: process.env.JWT_EXPIRES_IN || '2d',
   geminiApiKey: (process.env.GEMINI_API_KEY || '').trim(),
   geminiModel: process.env.GEMINI_EMBEDDING_MODEL || 'text-embedding-004',
   smtpHost: (process.env.SMTP_HOST || '').trim(),
